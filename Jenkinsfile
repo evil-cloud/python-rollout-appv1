@@ -1,4 +1,4 @@
-// Pipeline version: v1.0.1
+// Pipeline version: v1.0.2
 pipeline {
     agent { label 'jenkins-jenkins-agent' }
 

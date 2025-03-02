@@ -1,4 +1,3 @@
-# 🔥 Caché de Git y archivos temporale0
 // Pipeline version: v1.0.5
 pipeline {
     agent { label 'jenkins-jenkins-agent' }

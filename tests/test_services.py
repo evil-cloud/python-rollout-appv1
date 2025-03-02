@@ -8,4 +8,6 @@ def mock_external_api(mocker):
 
 def test_process_data(mock_external_api):
     result = process_data()
+
+    # Se asegura de que el mensaje contenga la estructura esperada
     assert result == {"message": "Datos procesados correctamente: {'info': 'ok'}"}

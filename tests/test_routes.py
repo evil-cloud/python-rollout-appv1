@@ -5,10 +5,16 @@ client = TestClient(app)
 
 def test_health_check():
     response = client.get("/health")
+    
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "service": "rollout-service"}
+    assert response.json() == {
+        "status": "ok",
+        "service": "rollout-service"
+    }
 
 def test_get_version():
     response = client.get("/api/v1/rollout/version")
+    
     assert response.status_code == 200
+    assert "version" in response.json()
     assert response.json()["version"] == "1.0.3"

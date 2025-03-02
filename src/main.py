@@ -32,7 +32,8 @@ logger = setup_logging()
 
 app = FastAPI(title="Rollout Service", version="1.0.3")
 
-Instrumentator().instrument(app).expose(app)
+instrumentator = Instrumentator().instrument(app)
+instrumentator.expose(app, endpoint="/metrics")
 
 class LogMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):

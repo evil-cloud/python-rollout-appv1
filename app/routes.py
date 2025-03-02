@@ -13,5 +13,5 @@ async def get_version():
 
 @router.get("/api/v1/rollout/strategy", response_model=MessageResponse)
 async def hello():
-    return {"message": "¡Hola Mundo v1.0.2 desde Argo Rollouts!"}
+    return {"message": "¡Hola Mundo v1.0.3 desde Argo Rollouts!"}
 

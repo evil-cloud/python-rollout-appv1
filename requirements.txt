@@ -4,4 +4,5 @@ requests
 pybreaker
 prometheus-fastapi-instrumentator
 prometheus-client
-
+pytest
+pytest-httpx

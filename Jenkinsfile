@@ -1,3 +1,4 @@
+# 🔥 Caché de Git y archivos temporale0
 // Pipeline version: v1.0.5
 pipeline {
     agent { label 'jenkins-jenkins-agent' }
@@ -32,7 +33,7 @@ pipeline {
                             sh """
                             sonar-scanner \
                                 -Dsonar.projectKey=${env.SONAR_PROJECT} \
-                                -Dsonar.sources=app \
+                                -Dsonar.sources=src \
                                 -Dsonar.language=py \
                                 -Dsonar.host.url=${env.SONAR_HOST} \
                                 -Dsonar.login=\$SONAR_TOKEN

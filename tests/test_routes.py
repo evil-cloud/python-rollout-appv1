@@ -17,4 +17,4 @@ def test_get_version():
     
     assert response.status_code == 200
     assert "version" in response.json()
-    assert response.json()["version"] == "1.0.3"
+    assert response.json()["version"] == "1.0.2"

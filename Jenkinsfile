@@ -1,4 +1,4 @@
-// Pipeline version: v1.0.5
+// Pipeline version: v1.0.6
 pipeline {
     agent { label 'jenkins-jenkins-agent' }
 
@@ -41,6 +41,26 @@ pipeline {
                         } catch (Exception e) {
                             logFailure("ANALYSIS", "SonarQube analysis failed: ${e.message}")
                             error("Stopping pipeline due to SonarQube failure.")
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Unit Tests') {
+            steps {
+                container('dind') {
+                    script {
+                        logInfo("TESTS", "Running unit tests...")
+                        try {
+                            sh """
+                            docker build -t python-tests -f Dockerfile.test .
+                            docker run --rm -v $(pwd)/tests:/app/tests python-tests
+                            """
+                            logSuccess("TESTS", "Unit tests passed successfully.")
+                        } catch (Exception e) {
+                            logFailure("TESTS", "Unit tests failed: ${e.message}")
+                            error("Stopping pipeline due to unit test failure.")
                         }
                     }
                 }
@@ -133,3 +153,4 @@ def logFailure(stage, message) {
 def getTimestamp() {
     return sh(script: "TZ='America/Guatemala' date '+%Y-%m-%d %H:%M:%S'", returnStdout: true).trim()
 }
+

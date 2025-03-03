@@ -17,7 +17,7 @@ async def health_check():
 
 @router.get("/api/v1/rollout/version", response_model=VersionResponse)
 async def get_version():
-    return {"version": "1.0.4"}
+    return {"version": "1.0.2"}
 
 @router.get("/api/v1/rollout/strategy", response_model=MessageResponse)
 async def hello():

@@ -30,7 +30,6 @@ site-packages/
 .coverage
 .tox/
 
-Dockerfile.test
 docker-compose.override.yml
 .Dockerfile.swp
 

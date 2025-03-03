@@ -51,13 +51,6 @@ pipeline {
             steps {
                 container('dind') {
                     script {
-                        logInfo("TESTS", "Checking workspace contents before running unit tests...")
-                        sh '''
-                        echo "Current working directory:"
-                        pwd
-                        echo "Workspace contents:"
-                        ls -la
-                        '''
                         logInfo("TESTS", "Running unit tests...")
                         try {
                             sh '''

@@ -1,5 +1,5 @@
 // Pipeline version: v1.1.3
-@Library('ci-pipelines-lib') _
+// @Library('ci-pipelines-lib') _
 
 pipeline {
     agent { label 'jenkins-jenkins-agent' }

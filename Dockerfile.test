@@ -16,6 +16,8 @@ COPY tests /app/tests
 # Definir el path de Python para que pytest reconozca el código
 ENV PYTHONPATH=/app/src
 
+RUN mkdir -p /app/tests && chown -R app:app /app/tests
+
 # Cambiar permisos para evitar problemas de acceso a archivos
 RUN chown -R app:app /app
 USER app

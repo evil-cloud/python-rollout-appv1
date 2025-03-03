@@ -1,4 +1,4 @@
-// Pipeline version: v1.0.6
+// Pipeline version: v1.1.1
 pipeline {
     agent { label 'jenkins-jenkins-agent' }
 
@@ -29,14 +29,14 @@ pipeline {
                     script {
                         logInfo("ANALYSIS", "Running static code analysis with SonarQube...")
                         try {
-                            sh """
+                            sh '''
                             sonar-scanner \
-                                -Dsonar.projectKey=${env.SONAR_PROJECT} \
+                                -Dsonar.projectKey=${SONAR_PROJECT} \
                                 -Dsonar.sources=src \
                                 -Dsonar.language=py \
-                                -Dsonar.host.url=${env.SONAR_HOST} \
-                                -Dsonar.login=\$SONAR_TOKEN
-                            """
+                                -Dsonar.host.url=${SONAR_HOST} \
+                                -Dsonar.login=$SONAR_TOKEN
+                            '''
                             logSuccess("ANALYSIS", "SonarQube analysis completed successfully.")
                         } catch (Exception e) {
                             logFailure("ANALYSIS", "SonarQube analysis failed: ${e.message}")
@@ -53,10 +53,10 @@ pipeline {
                     script {
                         logInfo("TESTS", "Running unit tests...")
                         try {
-                            sh """
+                            sh '''
                             docker build -t python-tests -f Dockerfile.test .
                             docker run --rm -v $(pwd)/tests:/app/tests python-tests
-                            """
+                            '''
                             logSuccess("TESTS", "Unit tests passed successfully.")
                         } catch (Exception e) {
                             logFailure("TESTS", "Unit tests failed: ${e.message}")
@@ -73,10 +73,10 @@ pipeline {
                     script {
                         logInfo("BUILD", "Building Docker image...")
                         try {
-                            sh """
-                            docker build --no-cache -t ${IMAGE_NAME}:${env.SHORT_SHA} .
-                            docker tag ${IMAGE_NAME}:${env.SHORT_SHA} ${IMAGE_NAME}:latest
-                            """
+                            sh '''
+                            docker build --no-cache -t ${IMAGE_NAME}:${SHORT_SHA} .
+                            docker tag ${IMAGE_NAME}:${SHORT_SHA} ${IMAGE_NAME}:latest
+                            '''
                             logSuccess("BUILD", "Build completed.")
                         } catch (Exception e) {
                             logFailure("BUILD", "Docker build failed: ${e.message}")
@@ -94,11 +94,11 @@ pipeline {
                         withCredentials([string(credentialsId: 'docker-token', variable: 'DOCKER_TOKEN')]) {
                             logInfo("PUSH", "Uploading Docker image...")
                             try {
-                                sh """
-                                echo "\$DOCKER_TOKEN" | docker login -u "d4rkghost47" --password-stdin > /dev/null 2>&1
-                                docker push ${IMAGE_NAME}:${env.SHORT_SHA}
+                                sh '''
+                                echo "$DOCKER_TOKEN" | docker login -u "d4rkghost47" --password-stdin > /dev/null 2>&1
+                                docker push ${IMAGE_NAME}:${SHORT_SHA}
                                 docker push ${IMAGE_NAME}:latest
-                                """
+                                '''
                                 logSuccess("PUSH", "Image pushed successfully.")
                             } catch (Exception e) {
                                 logFailure("PUSH", "Docker push failed: ${e.message}")
@@ -115,9 +115,9 @@ pipeline {
                 script {
                     logInfo("SECURITY SCAN", "Running Trivy security scan...")
                     try {
-                        sh """
-                        trivy image --server ${TRIVY_HOST} ${IMAGE_NAME}:${env.SHORT_SHA} --severity HIGH,CRITICAL --quiet
-                        """
+                        sh '''
+                        trivy image --server ${TRIVY_HOST} ${IMAGE_NAME}:${SHORT_SHA} --severity HIGH,CRITICAL --quiet
+                        '''
                         logSuccess("SECURITY SCAN", "Security scan completed successfully.")
                     } catch (Exception e) {
                         logFailure("SECURITY SCAN", "Trivy security scan failed: ${e.message}")

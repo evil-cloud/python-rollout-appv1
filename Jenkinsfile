@@ -1,10 +1,4 @@
-// Pipeline version: v1.1.4
-load 'jenkins/vars/dockerUtils.groovy'
-load 'jenkins/vars/logUtils.groovy'
-load 'jenkins/vars/securityUtils.groovy'
-load 'jenkins/vars/sonarUtils.groovy'
-load 'jenkins/vars/testUtils.groovy'
-
+// Pipeline version: v1.1.2
 pipeline {
     agent { label 'jenkins-jenkins-agent' }
 
@@ -15,16 +9,16 @@ pipeline {
         SONAR_PROJECT   = "python-rollout-appv1"
         SONAR_HOST      = "http://sonarqube-sonarqube.sonarqube.svc.cluster.local:9000"
         TRIVY_HOST      = "http://trivy.trivy-system.svc.cluster.local:4954"
-        TZ              = "America/Guatemala"
+        TZ              = "America/Guatemala"  
     }
 
     stages {
         stage('Checkout') {
             steps {
                 script {
-                    logUtils.logInfo("CHECKOUT", "Starting code checkout...")
+                    logInfo("CHECKOUT", "Starting code checkout...")
                     checkout scm
-                    logUtils.logSuccess("CHECKOUT", "Code checkout completed.")
+                    logSuccess("CHECKOUT", "Code checkout completed.")
                 }
             }
         }
@@ -33,7 +27,21 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                     script {
-                        sonarUtils.runSonarQubeAnalysis(env.SONAR_PROJECT, env.SONAR_HOST, SONAR_TOKEN)
+                        logInfo("ANALYSIS", "Running static code analysis with SonarQube...")
+                        try {
+                            sh '''
+                            sonar-scanner \
+                                -Dsonar.projectKey=${SONAR_PROJECT} \
+                                -Dsonar.sources=src \
+                                -Dsonar.language=py \
+                                -Dsonar.host.url=${SONAR_HOST} \
+                                -Dsonar.login=$SONAR_TOKEN
+                            '''
+                            logSuccess("ANALYSIS", "SonarQube analysis completed successfully.")
+                        } catch (Exception e) {
+                            logFailure("ANALYSIS", "SonarQube analysis failed: ${e.message}")
+                            error("Stopping pipeline due to SonarQube failure.")
+                        }
                     }
                 }
             }
@@ -43,17 +51,38 @@ pipeline {
             steps {
                 container('dind') {
                     script {
-                        testUtils.runUnitTests()
+                        logInfo("TESTS", "Running unit tests...")
+                        try {
+                            sh '''
+                            docker build -t python-tests -f Dockerfile.test .
+                            docker run --rm -v $(pwd)/tests:/app/tests python-tests
+                            '''
+                            logSuccess("TESTS", "Unit tests passed successfully.")
+                        } catch (Exception e) {
+                            logFailure("TESTS", "Unit tests failed: ${e.message}")
+                            error("Stopping pipeline due to unit test failure.")
+                        }
                     }
                 }
             }
         }
 
+
         stage('Build Image') {
             steps {
                 container('dind') {
                     script {
-                        dockerUtils.buildImage(env.IMAGE_NAME, env.SHORT_SHA)
+                        logInfo("BUILD", "Building Docker image...")
+                        try {
+                            sh '''
+                            docker build --no-cache -t ${IMAGE_NAME}:${SHORT_SHA} .
+                            docker tag ${IMAGE_NAME}:${SHORT_SHA} ${IMAGE_NAME}:latest
+                            '''
+                            logSuccess("BUILD", "Build completed.")
+                        } catch (Exception e) {
+                            logFailure("BUILD", "Docker build failed: ${e.message}")
+                            error("Stopping pipeline due to build failure.")
+                        }
                     }
                 }
             }
@@ -64,7 +93,18 @@ pipeline {
                 container('dind') {
                     script {
                         withCredentials([string(credentialsId: 'docker-token', variable: 'DOCKER_TOKEN')]) {
-                            dockerUtils.pushImage(env.IMAGE_NAME, env.SHORT_SHA, DOCKER_TOKEN)
+                            logInfo("PUSH", "Uploading Docker image...")
+                            try {
+                                sh '''
+                                echo "$DOCKER_TOKEN" | docker login -u "d4rkghost47" --password-stdin > /dev/null 2>&1
+                                docker push ${IMAGE_NAME}:${SHORT_SHA}
+                                docker push ${IMAGE_NAME}:latest
+                                '''
+                                logSuccess("PUSH", "Image pushed successfully.")
+                            } catch (Exception e) {
+                                logFailure("PUSH", "Docker push failed: ${e.message}")
+                                error("Stopping pipeline due to push failure.")
+                            }
                         }
                     }
                 }
@@ -74,7 +114,16 @@ pipeline {
         stage('Security Scan') {
             steps {
                 script {
-                    securityUtils.runSecurityScan(env.TRIVY_HOST, env.IMAGE_NAME, env.SHORT_SHA)
+                    logInfo("SECURITY SCAN", "Running Trivy security scan...")
+                    try {
+                        sh '''
+                        trivy image --server ${TRIVY_HOST} ${IMAGE_NAME}:${SHORT_SHA} --severity HIGH,CRITICAL --quiet
+                        '''
+                        logSuccess("SECURITY SCAN", "Security scan completed successfully.")
+                    } catch (Exception e) {
+                        logFailure("SECURITY SCAN", "Trivy security scan failed: ${e.message}")
+                        error("Stopping pipeline due to security scan failure.")
+                    }
                 }
             }
         }
@@ -82,16 +131,27 @@ pipeline {
 
     post {
         success {
-            script {
-                logUtils.logSuccess("PIPELINE", "Pipeline completed successfully.")
-            }
+            logSuccess("PIPELINE", "Pipeline completed successfully.")
         }
-        
         failure {
-            script {
-                logUtils.logFailure("PIPELINE", "Pipeline failed.")
-            }
+            logFailure("PIPELINE", "Pipeline failed.")
         }
     }
+}
+
+def logInfo(stage, message) {
+    echo "[${stage}] [INFO] ${getTimestamp()} - ${message}"
+}
+
+def logSuccess(stage, message) {
+    echo "[${stage}] [SUCCESS] ${getTimestamp()} - ${message}"
+}
+
+def logFailure(stage, message) {
+    echo "[${stage}] [FAILURE] ${getTimestamp()} - ${message}"
+}
+
+def getTimestamp() {
+    return sh(script: "TZ='America/Guatemala' date '+%Y-%m-%d %H:%M:%S'", returnStdout: true).trim()
 }
 

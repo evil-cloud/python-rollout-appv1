@@ -78,10 +78,15 @@ pipeline {
 
     post {
         success {
-            logUtils.logSuccess("PIPELINE", "Pipeline completed successfully.")
+            script {
+                logUtils.logSuccess("PIPELINE", "Pipeline completed successfully.")
+            }
         }
+        
         failure {
-            logUtils.logFailure("PIPELINE", "Pipeline failed.")
+            script {
+                logUtils.logFailure("PIPELINE", "Pipeline failed.")
+            }
         }
     }
 }

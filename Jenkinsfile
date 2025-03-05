@@ -6,7 +6,7 @@ pipeline {
         IMAGE_NAME      = "d4rkghost47/python-rollout-appv1"
         REGISTRY        = "https://index.docker.io/v1/"
         SHORT_SHA       = "${GIT_COMMIT[0..7]}"
-        SONAR_PROJECT   = "python-rollout-appv1"
+        SONAR_PROJECT   = "python-gitops-rollout"
         SONAR_HOST      = "http://sonarqube-sonarqube.sonarqube.svc.cluster.local:9000"
         TRIVY_HOST      = "http://trivy.trivy-system.svc.cluster.local:4954"
         TZ              = "America/Guatemala"  
@@ -33,7 +33,6 @@ pipeline {
                             sonar-scanner \
                                 -Dsonar.projectKey=${SONAR_PROJECT} \
                                 -Dsonar.sources=src \
-                                -Dsonar.language=py \
                                 -Dsonar.host.url=${SONAR_HOST} \
                                 -Dsonar.login=$SONAR_TOKEN
                             '''

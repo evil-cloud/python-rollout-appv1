@@ -21,7 +21,7 @@ async def get_version():
 
 @router.get("/api/v1/rollout/strategy", response_model=MessageResponse)
 async def hello():
-    return {"message": "¡Hola Mundo v1.0.9 desde Argo Rollouts!"}
+    return {"message": "¡Hola Mundo v1.0.8 desde Argo Rollouts!"}
 
 @router.get("/api/v1/rollout/external")
 async def fetch_external_data():

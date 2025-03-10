@@ -1,9 +1,10 @@
 import sqlite3
 import os
 
-DB_FILE = "database.db"
+DB_FILE = "/app/data/database.db"
 
 def get_db_connection():
+    os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
     conn = sqlite3.connect(DB_FILE, check_same_thread=False)
     conn.execute("CREATE TABLE IF NOT EXISTS data (key INTEGER PRIMARY KEY, value TEXT)")
     return conn

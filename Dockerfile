@@ -21,15 +21,16 @@ RUN groupadd -g 3000 app && useradd -m -u 10001 -g 3000 --no-log-init app
 # Copiar librerías instaladas desde el builder
 COPY --from=builder /install /usr/local
 
-# Copiar todo el código fuente manteniendo la nueva estructura
+# Copiar código fuente
 COPY src /app/src
 
-# **Agregar la variable de entorno PYTHONPATH**
+# **Crear la carpeta donde estará la base de datos**
+RUN mkdir -p /app/data && chown -R app:app /app
+
+# Agregar la variable de entorno PYTHONPATH
 ENV PYTHONPATH=/app/src
 
-# Cambiar permisos de ejecución al usuario no root
-RUN chown -R app:app /app
-
+# Usar usuario no root
 USER app
 
 # Exponer el puerto de la aplicación
@@ -37,3 +38,4 @@ EXPOSE 8000
 
 # Comando de ejecución de FastAPI con Uvicorn
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+

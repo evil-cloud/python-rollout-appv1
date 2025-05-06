@@ -23,49 +23,73 @@ pipeline {
             }
         }
 
-        stage('Static Code Analysis') {
-            steps {
-                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    script {
-                        logInfo("ANALYSIS", "Running static code analysis with SonarQube...")
-                        try {
-                            sh '''
-                            sonar-scanner \
-                                -Dsonar.projectKey=${SONAR_PROJECT} \
-                                -Dsonar.sources=src \
-                                -Dsonar.host.url=${SONAR_HOST} \
-                                -Dsonar.login=$SONAR_TOKEN
-                            '''
-                            logSuccess("ANALYSIS", "SonarQube analysis completed successfully.")
-                        } catch (Exception e) {
-                            logFailure("ANALYSIS", "SonarQube analysis failed: ${e.message}")
-                            error("Stopping pipeline due to SonarQube failure.")
+        stage('Test and Analysis') {
+            parallel {
+                stage('Static Code Analysis') {
+                    steps {
+                        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                            script {
+                                logInfo("ANALYSIS", "Running static code analysis with SonarQube...")
+                                try {
+                                    sh '''
+                                    sonar-scanner \\
+                                        -Dsonar.projectKey=${SONAR_PROJECT} \\
+                                        -Dsonar.sources=src \\
+                                        -Dsonar.host.url=${SONAR_HOST} \\
+                                        -Dsonar.login=$SONAR_TOKEN
+                                    '''
+                                    logSuccess("ANALYSIS", "SonarQube analysis completed successfully.")
+                                } catch (Exception e) {
+                                    logFailure("ANALYSIS", "SonarQube analysis failed: ${e.message}")
+                                    error("Stopping pipeline due to SonarQube failure.")
+                                }
+                            }
+                        }
+                    }
+                }
+
+                stage('Unit Tests') {
+                    steps {
+                        container('dind') {
+                            script {
+                                logInfo("TESTS", "Running unit tests...")
+                                try {
+                                    sh '''
+                                    docker build -t python-tests -f Dockerfile.test .
+                                    docker run --rm -v $(pwd)/tests:/app/tests python-tests
+                                    '''
+                                    logSuccess("TESTS", "Unit tests passed successfully.")
+                                } catch (Exception e) {
+                                    logFailure("TESTS", "Unit tests failed: ${e.message}")
+                                    error("Stopping pipeline due to unit test failure.")
+                                }
+                            }
                         }
                     }
                 }
             }
         }
 
-        stage('Unit Tests') {
+        stage('Security Scan') {
             steps {
                 container('dind') {
                     script {
-                        logInfo("TESTS", "Running unit tests...")
+                        logInfo("SECURITY SCAN", "Listing local Docker images before scan...")
+                        sh 'docker images'
+
+                        logInfo("SECURITY SCAN", "Running Trivy security scan...")
                         try {
-                            sh '''
-                            docker build -t python-tests -f Dockerfile.test .
-                            docker run --rm -v $(pwd)/tests:/app/tests python-tests
-                            '''
-                            logSuccess("TESTS", "Unit tests passed successfully.")
+                            sh "trivy image --server ${TRIVY_HOST} ${IMAGE_NAME}:${SHORT_SHA} --severity HIGH,CRITICAL --quiet"
+
+                            logSuccess("SECURITY SCAN", "Security scan completed successfully.")
                         } catch (Exception e) {
-                            logFailure("TESTS", "Unit tests failed: ${e.message}")
-                            error("Stopping pipeline due to unit test failure.")
+                            logFailure("SECURITY SCAN", "Trivy security scan failed: ${e.message}")
+                            error("Stopping pipeline due to security scan failure.")
                         }
                     }
                 }
             }
         }
-
 
         stage('Build Image') {
             steps {
@@ -105,23 +129,6 @@ pipeline {
                                 error("Stopping pipeline due to push failure.")
                             }
                         }
-                    }
-                }
-            }
-        }
-
-        stage('Security Scan') {
-            steps {
-                script {
-                    logInfo("SECURITY SCAN", "Running Trivy security scan...")
-                    try {
-                        sh '''
-                        trivy image --server ${TRIVY_HOST} ${IMAGE_NAME}:${SHORT_SHA} --severity HIGH,CRITICAL --quiet
-                        '''
-                        logSuccess("SECURITY SCAN", "Security scan completed successfully.")
-                    } catch (Exception e) {
-                        logFailure("SECURITY SCAN", "Trivy security scan failed: ${e.message}")
-                        error("Stopping pipeline due to security scan failure.")
                     }
                 }
             }

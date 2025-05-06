@@ -90,27 +90,6 @@ pipeline {
             }
         }
 
-        stage('Security Scan') {
-            steps {
-                container('dind') {
-                    script {
-                        logInfo("SECURITY SCAN", "Listing local Docker images before scan...")
-                        sh 'docker images'
-
-                        logInfo("SECURITY SCAN", "Running Trivy security scan...")
-                        try {
-                            sh "trivy image --server ${TRIVY_HOST} ${IMAGE_NAME}:${SHORT_SHA} --severity HIGH,CRITICAL --quiet"
-
-                            logSuccess("SECURITY SCAN", "Security scan completed successfully.")
-                        } catch (Exception e) {
-                            logFailure("SECURITY SCAN", "Trivy security scan failed: ${e.message}")
-                            error("Stopping pipeline due to security scan failure.")
-                        }
-                    }
-                }
-            }
-        }
-
         stage('Push Image') {
             steps {
                 container('dind') {
@@ -129,6 +108,23 @@ pipeline {
                                 error("Stopping pipeline due to push failure.")
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                script {
+                    logInfo("SECURITY SCAN", "Running Trivy security scan...")
+                    try {
+                        sh '''
+                        trivy image --server ${TRIVY_HOST} ${IMAGE_NAME}:${SHORT_SHA} --severity HIGH,CRITICAL --quiet
+                        '''
+                        logSuccess("SECURITY SCAN", "Security scan completed successfully.")
+                    } catch (Exception e) {
+                        logFailure("SECURITY SCAN", "Trivy security scan failed: ${e.message}")
+                        error("Stopping pipeline due to security scan failure.")
                     }
                 }
             }

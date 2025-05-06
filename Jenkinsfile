@@ -70,6 +70,26 @@ pipeline {
             }
         }
 
+        stage('Build Image') {
+            steps {
+                container('dind') {
+                    script {
+                        logInfo("BUILD", "Building Docker image...")
+                        try {
+                            sh '''
+                            docker build --no-cache -t ${IMAGE_NAME}:${SHORT_SHA} .
+                            docker tag ${IMAGE_NAME}:${SHORT_SHA} ${IMAGE_NAME}:latest
+                            '''
+                            logSuccess("BUILD", "Build completed.")
+                        } catch (Exception e) {
+                            logFailure("BUILD", "Docker build failed: ${e.message}")
+                            error("Stopping pipeline due to build failure.")
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Security Scan') {
             steps {
                 container('dind') {
@@ -85,26 +105,6 @@ pipeline {
                         } catch (Exception e) {
                             logFailure("SECURITY SCAN", "Trivy security scan failed: ${e.message}")
                             error("Stopping pipeline due to security scan failure.")
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Build Image') {
-            steps {
-                container('dind') {
-                    script {
-                        logInfo("BUILD", "Building Docker image...")
-                        try {
-                            sh '''
-                            docker build --no-cache -t ${IMAGE_NAME}:${SHORT_SHA} .
-                            docker tag ${IMAGE_NAME}:${SHORT_SHA} ${IMAGE_NAME}:latest
-                            '''
-                            logSuccess("BUILD", "Build completed.")
-                        } catch (Exception e) {
-                            logFailure("BUILD", "Docker build failed: ${e.message}")
-                            error("Stopping pipeline due to build failure.")
                         }
                     }
                 }

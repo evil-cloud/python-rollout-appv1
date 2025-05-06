@@ -1,4 +1,4 @@
-// Pipeline version: v1.1.3
+// Pipeline version: v1.1.4
 pipeline {
     agent { label 'jenkins-jenkins-agent' }
 
@@ -89,6 +89,7 @@ pipeline {
                 }
             }
         }
+    
 
         stage('Push Image') {
             steps {

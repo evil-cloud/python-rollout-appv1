@@ -1,13 +1,14 @@
 from prometheus_client import Counter, Histogram
 
-EXTERNAL_API_CALLS_TOTAL = Counter(
-    'app_external_api_calls_total',  
-    'Total number of calls made to the external API.',
+HTTP_CLIENT_EXTERNAL_API_REQUESTS_TOTAL = Counter(
+    'http_client_external_api_requests_total',
+    'Total number of HTTP client requests made to the external API.',
     ['status']
 )
 
-EXTERNAL_API_CALL_DURATION_SECONDS = Histogram(
-    'app_external_api_call_duration_seconds',
-    'Histogram of external API call duration in seconds.',
+
+HTTP_CLIENT_EXTERNAL_API_REQUEST_DURATION_SECONDS = Histogram(
+    'http_client_external_api_request_duration_seconds',
+    'Histogram of external API request duration in seconds.',
     ['status']
 )

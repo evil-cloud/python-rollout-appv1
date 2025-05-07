@@ -56,7 +56,7 @@ pipeline {
                                 try {
                                     sh '''
                                     docker build -t python-tests -f Dockerfile.test .
-                                    docker run --rm -v $(pwd)/tests:/app/tests python-tests
+                                    docker run --rm python-tests
                                     '''
                                     logSuccess("TESTS", "Unit tests passed successfully.")
                                 } catch (Exception e) {

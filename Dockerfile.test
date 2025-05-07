@@ -23,4 +23,3 @@ USER app
 
 # CMD mejorado con reportes y salida más detallada en CI/CD
 CMD ["sh", "-c", "PYTHONPATH=/app/src pytest --emoji -v --color=yes"]
-

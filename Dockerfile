@@ -24,9 +24,6 @@ COPY --from=builder /install /usr/local
 # Copiar código fuente
 COPY src /app/src
 
-# **Crear la carpeta donde estará la base de datos**
-RUN mkdir -p /app/data && chown -R app:app /app
-
 # Agregar la variable de entorno PYTHONPATH
 ENV PYTHONPATH=/app/src
 

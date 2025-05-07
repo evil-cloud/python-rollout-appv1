@@ -7,7 +7,8 @@ RUN groupadd -g 3000 app && useradd -m -u 10001 -g 3000 --no-log-init app
 
 # Copiar e instalar dependencias con caching para evitar instalaciones repetitivas
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements-dev.txt .
+RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
 
 # Copiar el código fuente y las pruebas
 COPY src /app/src
@@ -15,8 +16,6 @@ COPY tests /app/tests
 
 # Definir el path de Python para que pytest reconozca el código
 ENV PYTHONPATH=/app/src
-
-RUN mkdir -p /app/tests && chown -R app:app /app/tests
 
 # Cambiar permisos para evitar problemas de acceso a archivos
 RUN chown -R app:app /app

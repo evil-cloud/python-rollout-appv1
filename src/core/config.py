@@ -1,8 +1,12 @@
+from pydantic_settings import BaseSettings, SettingsConfigDict
 import os
 
-class Settings:
+class Settings(BaseSettings):
     PROJECT_NAME: str = "Rollout Service"
-    VERSION: str = "1.0.3"
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:////app/data/database.db")
+    VERSION: str = "1.0.2"
+    ROLLOUT_STRATEGY: str = "v1.0.1"
+    EXTERNAL_API_URL: str = "https://jsonplaceholder.typicode.com/todos/1"
+    
+
 
 settings = Settings()

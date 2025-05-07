@@ -4,9 +4,4 @@ requests
 pybreaker
 prometheus-fastapi-instrumentator
 prometheus-client
-pytest
-pytest-httpx
-pytest-mock
-
-pytest-emoji
-pytest-pretty
+pydantic-settings

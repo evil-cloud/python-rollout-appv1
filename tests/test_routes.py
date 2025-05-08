@@ -9,7 +9,7 @@ def test_health_check():
     assert response.status_code == 200
     assert response.json() == {
         "status": "ok",
-        "service": "rollout-service"
+        "service": "gitops-api"
     }
 
 def test_get_version():

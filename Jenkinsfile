@@ -1,12 +1,13 @@
-// Pipeline version: v1.1.5
+// Pipeline version: v1.1.1
 pipeline {
     agent { label 'jenkins-jenkins-agent' }
 
     environment {
-        IMAGE_NAME      = "d4rkghost47/python-rollout-appv1"
+        IMAGE_NAME      = "d4rkghost47/gitops-api"
         REGISTRY        = "https://index.docker.io/v1/"
         SHORT_SHA       = "${GIT_COMMIT[0..7]}"
-        SONAR_PROJECT   = "python-gitops-rollout"
+        SONAR_PROJECT   = "gitops-api"
+        SONAR_SOURCE    = "src"
         SONAR_HOST      = "http://sonarqube-sonarqube.sonarqube.svc.cluster.local:9000"
         TRIVY_HOST      = "http://trivy.trivy-system.svc.cluster.local:4954"
         TZ              = "America/Guatemala"  
@@ -34,7 +35,7 @@ pipeline {
                                     sh '''
                                     sonar-scanner \\
                                         -Dsonar.projectKey=${SONAR_PROJECT} \\
-                                        -Dsonar.sources=src \\
+                                        -Dsonar.sources=${SONAR_SOURCE} \\
                                         -Dsonar.host.url=${SONAR_HOST} \\
                                         -Dsonar.login=$SONAR_TOKEN
                                     '''
@@ -55,8 +56,8 @@ pipeline {
                                 logInfo("TESTS", "Running unit tests...")
                                 try {
                                     sh '''
-                                    docker build -t python-tests -f Dockerfile.test .
-                                    docker run --rm python-tests
+                                    docker build -t gitops-api-tests -f Dockerfile.test .
+                                    docker run --rm gitops-api-tests
                                     '''
                                     logSuccess("TESTS", "Unit tests passed successfully.")
                                 } catch (Exception e) {
